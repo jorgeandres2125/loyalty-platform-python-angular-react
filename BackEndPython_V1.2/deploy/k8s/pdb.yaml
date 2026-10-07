@@ -1,0 +1,11 @@
+# AP-0081: PodDisruptionBudget -- garantiza que al menos 2 replicas permanezcan
+# disponibles durante mantenimientos voluntarios (drain de nodo, upgrade del cluster).
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: sufi-backend-pdb
+spec:
+  minAvailable: 2
+  selector:
+    matchLabels:
+      app: sufi-backend

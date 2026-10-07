@@ -1,0 +1,15 @@
+# AP-0081: Service estable que balancea entre las replicas sanas (readiness).
+apiVersion: v1
+kind: Service
+metadata:
+  name: sufi-backend
+  labels:
+    app: sufi-backend
+spec:
+  type: ClusterIP
+  selector:
+    app: sufi-backend
+  ports:
+    - name: http
+      port: 80
+      targetPort: 8000

@@ -1,0 +1,11 @@
+# AP-0079: nunca versionar secretos reales (solo plantillas .example)
+.env
+.env.development
+.env.test
+.env.staging
+.env.production
+!.env.staging.example
+!.env.production.example
+
+# AP-0114: artefacto efimero del SCA en CI
+requirements-sca.txt

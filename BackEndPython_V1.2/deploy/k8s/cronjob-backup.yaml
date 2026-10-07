@@ -1,0 +1,26 @@
+# AP-0081 (DRP): respaldo automatizado de la base de datos con copia FUERA DE SITIO.
+# CronJob diario que ejecuta el script de backup: genera un .bak cifrado y lo sube a
+# una Storage Account geo-redundante (GRS) en OTRA region. Responsable del destino
+# off-site y su inmutabilidad (WORM): Infraestructura.
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: sufi-backend-backup
+spec:
+  schedule: "0 3 * * *"            # 03:00 diario
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 7
+  failedJobsHistoryLimit: 7
+  jobTemplate:
+    spec:
+      backoffLimit: 2
+      template:
+        spec:
+          restartPolicy: OnFailure
+          containers:
+            - name: backup
+              image: ghcr.io/OWNER/REPO/sufi-backend:REEMPLAZAR_TAG
+              command: ["/bin/bash", "/app/deploy/backup/backup.sh"]
+              envFrom:
+                - secretRef:
+                    name: sufi-backup-secrets   # cadena de BD + credenciales de Storage GRS

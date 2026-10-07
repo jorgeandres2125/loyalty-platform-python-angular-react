@@ -1,0 +1,46 @@
+# AP-0117 -- Control de admision de imagenes firmadas (Kyverno).
+# Solo admite en el cluster imagenes provenientes de registries aprobados y firmadas con
+# cosign (keyless, Sigstore) por el pipeline del proyecto (AP-0149). Rechaza (fail-closed)
+# cualquier imagen no firmada o de un origen no aprobado -- el analogo, en la capa de
+# orquestacion, de exigir firma del fabricante para el software complementario.
+#
+# Responsabilidad: el equipo de desarrollo entrega esta politica; Plataforma la aplica y la
+# mantiene en modo Enforce sobre el cluster.
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: exigir-imagenes-firmadas
+  annotations:
+    control: ap-0117
+spec:
+  validationFailureAction: Enforce
+  webhookTimeoutSeconds: 30
+  rules:
+    - name: solo-registries-aprobados
+      match:
+        any:
+          - resources:
+              kinds:
+                - Pod
+      validate:
+        message: "AP-0117: solo se permiten imagenes de registries aprobados (ghcr.io del proyecto o el ACR corporativo)."
+        pattern:
+          spec:
+            containers:
+              - image: "ghcr.io/OWNER/REPO/* | *.azurecr.io/*"
+    - name: verificar-firma-cosign
+      match:
+        any:
+          - resources:
+              kinds:
+                - Pod
+      verifyImages:
+        - imageReferences:
+            - "ghcr.io/OWNER/REPO/*"
+          attestors:
+            - entries:
+                - keyless:
+                    subject: "https://github.com/OWNER/REPO/*"
+                    issuer: "https://token.actions.githubusercontent.com"
+          mutateDigest: true
+          required: true

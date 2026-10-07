@@ -1,0 +1,30 @@
+-- ============================================================================
+-- Migration: 20260610_0007 — Cifrado a nivel de aplicación de la cuenta bancaria
+--                            (Medida C — AP-0147 / AP-0095)
+-- ----------------------------------------------------------------------------
+-- Reemplaza las columnas en claro numero_de_cuenta / tipo_de_cuenta de
+-- users_perfil_contacto por columnas hermanas VARBINARY(MAX) cifradas con
+-- AES-256-GCM (formato [ver|key_id|nonce|ct+tag]). El valor en claro pasa a
+-- existir solo en la entidad de dominio; en la BD queda opaco incluso para sa.
+--
+-- IMPORTANTE — el TRANSFORM DE DATOS (cifrado de los valores existentes) NO se
+-- hace en SQL: requiere la clave AES, que vive fuera de la BD (KMS / .env). Lo
+-- ejecuta el script Python verificable:
+--
+--     python -m migration.cifrar_cuenta_bancaria --drop
+--
+-- que añade las columnas _enc, cifra (backfill), verifica paridad y SOLO
+-- entonces elimina las columnas en claro. Este .sql documenta el delta de
+-- esquema neto resultante; no re-ejecutar si el script Python ya se aplicó.
+--
+-- Reversibilidad: el texto plano permanece en sufiatulado (respaldo). El drop
+-- es irreversible en sufi_db.
+-- ============================================================================
+
+-- Delta de esquema neto (equivalente a lo que deja el script Python):
+--
+-- ALTER TABLE users_perfil_contacto ADD numero_de_cuenta_enc VARBINARY(MAX) NULL;
+-- ALTER TABLE users_perfil_contacto ADD tipo_de_cuenta_enc   VARBINARY(MAX) NULL;
+-- <backfill cifrado vía migration/cifrar_cuenta_bancaria.py>
+-- ALTER TABLE users_perfil_contacto DROP COLUMN numero_de_cuenta;
+-- ALTER TABLE users_perfil_contacto DROP COLUMN tipo_de_cuenta;

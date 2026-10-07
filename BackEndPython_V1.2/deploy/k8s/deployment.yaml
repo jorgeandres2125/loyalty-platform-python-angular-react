@@ -1,0 +1,106 @@
+# AP-0081 -- Alta Disponibilidad (capa de aplicacion).
+# Despliegue del backend SUFI con redundancia: >=2 replicas repartidas entre zonas
+# de disponibilidad, probes de liveness/readiness (AP-0081) y limites de recursos.
+# Responsable: equipo de desarrollo (manifiesto) / Infraestructura (cluster multi-zona).
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sufi-backend
+  labels:
+    app: sufi-backend
+    control: ap-0081
+spec:
+  replicas: 3                      # redundancia N+1: tolera la caida de una replica
+  revisionHistoryLimit: 5
+  strategy:
+    type: RollingUpdate            # despliegue sin corte de servicio
+    rollingUpdate:
+      maxUnavailable: 0            # nunca baja de la capacidad deseada durante el rollout
+      maxSurge: 1
+  selector:
+    matchLabels:
+      app: sufi-backend
+  template:
+    metadata:
+      labels:
+        app: sufi-backend
+    spec:
+      # Anti-afinidad: reparte las replicas entre nodos y zonas distintas para que
+      # la perdida de un nodo o una zona no derribe todas las replicas a la vez.
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                labelSelector:
+                  matchLabels:
+                    app: sufi-backend
+                topologyKey: topology.kubernetes.io/zone
+      topologySpreadConstraints:
+        - maxSkew: 1
+          topologyKey: topology.kubernetes.io/zone
+          whenUnsatisfiable: ScheduleAnyway
+          labelSelector:
+            matchLabels:
+              app: sufi-backend
+      containers:
+        - name: backend
+          image: ghcr.io/OWNER/REPO/sufi-backend:REEMPLAZAR_TAG   # imagen firmada (AP-0149)
+          ports:
+            - containerPort: 8000
+          envFrom:
+            - secretRef:
+                name: sufi-backend-secrets     # inyectado por Infra (Key Vault CSI / Secrets)
+          resources:
+            requests:
+              cpu: "250m"
+              memory: "384Mi"
+            limits:
+              cpu: "1000m"
+              memory: "768Mi"
+          # AP-0081: liveness -- reinicia la replica si el proceso deja de responder.
+          livenessProbe:
+            httpGet:
+              path: /api/v1/health/live
+              port: 8000
+            initialDelaySeconds: 15
+            periodSeconds: 20
+            timeoutSeconds: 3
+            failureThreshold: 3
+          # AP-0081: readiness -- saca la replica del balanceo (sin reiniciarla) si la
+          # base de datos no responde; drena en caliente durante un failover de BD.
+          readinessProbe:
+            httpGet:
+              path: /api/v1/health/ready
+              port: 8000
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 3
+          # startupProbe: da margen al arranque antes de que actuen liveness/readiness.
+          startupProbe:
+            httpGet:
+              path: /api/v1/health/live
+              port: 8000
+            failureThreshold: 30
+            periodSeconds: 5
+          # AP-0120: contenedor endurecido -- rootfs de solo lectura para que el codigo y los
+          # binarios de la app no puedan modificarse en runtime (integridad por construccion).
+          securityContext:
+            readOnlyRootFilesystem: true
+            allowPrivilegeEscalation: false
+            runAsNonRoot: true
+            capabilities:
+              drop:
+                - ALL
+          volumeMounts:
+            - name: uploads
+              mountPath: /app/uploads
+            - name: tmp
+              mountPath: /tmp
+      # AP-0120: unicas rutas escribibles (efimeras), fuera del rootfs de solo lectura.
+      volumes:
+        - name: uploads
+          emptyDir: {}
+        - name: tmp
+          emptyDir: {}

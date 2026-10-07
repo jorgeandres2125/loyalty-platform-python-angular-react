@@ -1,0 +1,205 @@
+# AP-0150 -- Inventario de segmentacion de red (fuente canonica, machine-readable).
+#
+# Declara las zonas de red de la solucion SUFI y los flujos PERMITIDOS entre ellas.
+# Todo lo no declarado esta implicitamente BLOQUEADO (deny-by-default).
+#
+# Este archivo es la fuente de verdad para:
+#   - El gate de CI (validar_segmentacion.py) que impide una topologia plana.
+#   - La generacion de evidencia de auditoria (mapa de zonas y flujos).
+#   - La revision de Arquitectura y Seguridad.
+#
+# Responsabilidad: el equipo de desarrollo versiona este inventario; Infraestructura y
+# Seguridad lo aprueban y lo materializan con NSG/Security Groups/NetworkPolicies reales.
+
+version: 1
+sistema: sufi-siempre-a-tu-lado
+actualizado: "2026-07-15"
+
+# --------------------------------------------------------------------------
+# Zonas de red. `expuesta_a_internet` marca si la zona recibe trafico publico.
+# `critica` marca zonas que NUNCA deben ser alcanzables directamente desde Internet.
+# --------------------------------------------------------------------------
+zonas:
+  - id: internet
+    nombre: Internet
+    descripcion: Redes publicas no confiables.
+    expuesta_a_internet: true
+    critica: false
+
+  - id: dmz
+    nombre: DMZ
+    descripcion: Perimetro con Application Gateway, WAF, firewall perimetral e IPS inline.
+    expuesta_a_internet: true
+    critica: false
+    controles: [waf, firewall_perimetral, ips]
+
+  - id: web
+    nombre: Capa Web
+    descripcion: Sirve el SPA React estatico y actua como reverse proxy hacia la capa de aplicacion.
+    expuesta_a_internet: false
+    critica: true
+
+  - id: app
+    nombre: Capa Aplicacion
+    descripcion: Backend FastAPI (pods). Unico origen autorizado a la capa de datos.
+    expuesta_a_internet: false
+    critica: true
+    controles: [mtls, borde_confianza]
+
+  - id: data
+    nombre: Capa de Datos
+    descripcion: SQL Server 2019 (sufi_db). Sin IP publica, accesible solo por la capa de aplicacion.
+    expuesta_a_internet: false
+    critica: true
+
+  - id: shared
+    nombre: Servicios Compartidos
+    descripcion: KMS/HSM, gateway de correo, NTP, monitoreo, bastion.
+    expuesta_a_internet: false
+    critica: true
+
+  - id: mgmt
+    nombre: Red de Gestion
+    descripcion: Acceso administrativo por VPN + bastion con MFA (AP-0052).
+    expuesta_a_internet: false
+    critica: true
+
+# --------------------------------------------------------------------------
+# Flujos PERMITIDOS. Cualquier par (origen, destino) no listado esta bloqueado.
+# El puerto de la capa de datos (1433) solo puede tener origen `app`.
+# --------------------------------------------------------------------------
+flujos_permitidos:
+  - origen: internet
+    destino: dmz
+    puertos: [443]
+    descripcion: Unico ingreso publico.
+
+  - origen: dmz
+    destino: web
+    puertos: [443]
+    descripcion: Trafico saneado por WAF e IPS hacia la capa web.
+
+  - origen: web
+    destino: app
+    puertos: [443]
+    mtls: true
+    descripcion: Reverse proxy a la API con mTLS (AP-0003).
+
+  - origen: app
+    destino: data
+    puertos: [1433]
+    descripcion: Unico origen autorizado a SQL Server.
+
+  - origen: app
+    destino: shared
+    puertos: [443]
+    descripcion: Correo, KMS/HSM, NTP.
+
+  - origen: mgmt
+    destino: web
+    puertos: [22]
+    descripcion: Administracion desde bastion (VPN + MFA).
+
+  - origen: mgmt
+    destino: app
+    puertos: [22]
+    descripcion: Administracion desde bastion (VPN + MFA).
+
+  - origen: mgmt
+    destino: data
+    puertos: [1433, 3389]
+    descripcion: Administracion de BD desde bastion (VPN + MFA).
+
+  - origen: mgmt
+    destino: shared
+    puertos: [22]
+    descripcion: Administracion de servicios compartidos.
+
+# --------------------------------------------------------------------------
+# Flujos que deben estar EXPLICITAMENTE bloqueados (invariantes de seguridad).
+# El validador confirma que ninguno aparece en flujos_permitidos.
+# --------------------------------------------------------------------------
+flujos_prohibidos:
+  - origen: internet
+    destino: app
+    motivo: La capa de aplicacion nunca recibe trafico directo de Internet.
+  - origen: internet
+    destino: data
+    motivo: La base de datos nunca es alcanzable desde Internet.
+  - origen: internet
+    destino: shared
+    motivo: Los servicios compartidos no se exponen a Internet.
+  - origen: web
+    destino: data
+    motivo: La capa web nunca habla directamente con SQL Server.
+  - origen: data
+    destino: internet
+    motivo: SQL Server no tiene salida a Internet (egress deny).
+
+# --------------------------------------------------------------------------
+# Controles de seguridad requeridos y su dueno. `estado` refleja la realidad:
+#   entregado_proyecto  -> artefacto/compensatorio ya entregado por el proyecto.
+#   pendiente_infra     -> requiere despliegue y evidencia de Infraestructura/Seguridad.
+# --------------------------------------------------------------------------
+controles:
+  - id: waf
+    nombre: Web Application Firewall
+    dueno: infraestructura
+    estado: pendiente_infra
+    compensatorio_proyecto: [AP-0202, AP-0204, AP-0166]
+  - id: firewall_perimetral
+    nombre: Firewall perimetral
+    dueno: infraestructura
+    estado: pendiente_infra
+  - id: microsegmentacion
+    nombre: Firewall interno / microsegmentacion
+    dueno: devops
+    estado: entregado_proyecto
+    artefacto: networkpolicies.yaml
+  - id: ids
+    nombre: Intrusion Detection System
+    dueno: seguridad
+    estado: pendiente_infra
+    compensatorio_proyecto: [AP-0134]
+  - id: ips
+    nombre: Intrusion Prevention System
+    dueno: seguridad
+    estado: pendiente_infra
+  - id: bastion
+    nombre: Bastion / Jump server
+    dueno: infraestructura
+    estado: pendiente_infra
+    compensatorio_proyecto: [AP-0052]
+  - id: vpn
+    nombre: VPN de acceso remoto
+    dueno: infraestructura
+    estado: pendiente_infra
+  - id: mtls
+    nombre: mTLS en rutas criticas
+    dueno: aplicacion
+    estado: entregado_proyecto
+    compensatorio_proyecto: [AP-0003]
+  - id: borde_confianza
+    nombre: Borde de confianza de la aplicacion
+    dueno: aplicacion
+    estado: entregado_proyecto
+    compensatorio_proyecto: [AP-0064]
+  - id: acl_datos
+    nombre: ACL de base de datos (solo capa app)
+    dueno: infraestructura
+    estado: pendiente_infra
+    compensatorio_proyecto: [AP-0056, AP-0109]
+
+# --------------------------------------------------------------------------
+# Evidencias requeridas para cerrar el hallazgo a Verde (aportadas por Infra/Seguridad).
+# --------------------------------------------------------------------------
+evidencias_para_verde:
+  E1: Diagrama de arquitectura y de red aprobado por Arquitectura y Seguridad.
+  E2: Export de reglas del firewall perimetral e interno.
+  E3: Configuracion de WAF (OWASP CRS + exclusiones) en modo Prevention.
+  E4: Definicion y export de NSG / Security Groups por zona.
+  E5: Evidencia de IDS/IPS activos (reglas + muestra de alertas).
+  E6: Procedimiento aprobado de acceso administrativo (VPN + bastion + MFA).
+  E7: NSG/VPC Flow Logs que demuestren que la capa de datos solo recibe de la capa app.
+  E8: Inventario de componentes y segmentacion (este archivo) revisado por Infra.
+  E9: Declaracion corporativa de que ningun componente critico se expone a Internet.

@@ -1,0 +1,55 @@
+// AP-0134 - Reglas de deteccion (Microsoft Sentinel o Log Analytics).
+// Cada bloque es una ALERTA POR CONSULTA (analytics rule) sobre la tabla ingerida
+// desde sufi.seguridad. Ajuste los sufijos _s o _d segun el esquema del workspace.
+// Umbrales parametrizables; excluir watchlists de cuentas de servicio e IPs internas.
+
+// R1 - Fuerza bruta: 5 o mas fallos de login del mismo usuario en 5 minutos.
+SufiSeguridad_CL
+| where evento_seguridad_s == "autenticacion" and resultado_s == "fallo"
+| summarize intentos = count() by actor_s, bin(TimeGenerated, 5m)
+| where intentos >= 5
+| extend Severity = "High", Rule = "Fuerza bruta"
+
+// R2 - Password spray: una IP con fallos contra 10 o mas usuarios distintos en 10 min.
+SufiSeguridad_CL
+| where evento_seguridad_s == "autenticacion" and resultado_s == "fallo"
+| summarize usuarios = dcount(actor_s) by ip_s, bin(TimeGenerated, 10m)
+| where usuarios >= 10
+| extend Severity = "Critical", Rule = "Password spray"
+
+// R3 - Acceso tras bloqueo o inhabilitacion (AP-0133).
+SufiSeguridad_CL
+| where evento_seguridad_s in ("validacion_sesion", "autenticacion")
+| where detalle_s in ("cuenta_bloqueada", "cuenta_inhabilitado", "cuenta_eliminado")
+| extend Severity = "High", Rule = "Acceso tras bloqueo"
+
+// R4 - Alta o cambio de rol administrativo (AP-0001, AP-0054).
+SufiSeguridad_CL
+| where evento_seguridad_s == "autorizacion" and resultado_s == "exito"
+| where recurso_s has_any ("admin", "rol", "role")
+| extend Severity = "Critical", Rule = "Cambio de privilegio administrativo"
+
+// R5 - Errores de autorizacion en rafaga: 10 o mas 403 del mismo actor en 5 minutos.
+SufiSeguridad_CL
+| where evento_seguridad_s == "autorizacion" and resultado_s == "fallo"
+| summarize denegaciones = count() by actor_s, bin(TimeGenerated, 5m)
+| where denegaciones >= 10
+| extend Severity = "High", Rule = "IDOR o enumeracion (403 en rafaga)"
+
+// R6 - Token invalido o revocado repetido: 5 o mas de la misma IP en 5 minutos.
+SufiSeguridad_CL
+| where evento_seguridad_s == "validacion_sesion" and resultado_s == "fallo"
+| summarize rechazos = count() by ip_s, bin(TimeGenerated, 5m)
+| where rechazos >= 5
+| extend Severity = "Medium", Rule = "Token invalido repetido"
+
+// R7 - Desactivacion de un control de seguridad (config critica).
+SufiSeguridad_CL
+| where evento_seguridad_s == "cambio_credencial" or recurso_s has "config"
+| where detalle_s has_any ("disabled", "false", "off")
+| extend Severity = "Critical", Rule = "Control de seguridad desactivado"
+
+// R8 - El propio alertador reporta un canal caido (salud del pipeline).
+SufiSeguridad_CL
+| where evento_seguridad_s == "alerta_no_entregada"
+| extend Severity = "Medium", Rule = "Canal de alerta degradado"

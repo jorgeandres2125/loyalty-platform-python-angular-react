@@ -1,0 +1,76 @@
+{
+  "title": "Seguridad SUFI - AP-0134",
+  "uid": "sufi-seguridad-ap0134",
+  "schemaVersion": 39,
+  "tags": ["seguridad", "ap-0134", "sufi"],
+  "timezone": "browser",
+  "time": {"from": "now-24h", "to": "now"},
+  "templating": {"list": []},
+  "panels": [
+    {
+      "id": 1,
+      "type": "timeseries",
+      "title": "Eventos por severidad",
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 0},
+      "datasource": {"type": "elasticsearch", "uid": "sufi-logs"},
+      "targets": [
+        {
+          "query": "logger:sufi.seguridad",
+          "metrics": [{"type": "count"}],
+          "bucketAggs": [
+            {"type": "terms", "field": "extra.severidad"},
+            {"type": "date_histogram", "field": "@timestamp"}
+          ]
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "type": "stat",
+      "title": "Alertas emitidas (24h)",
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 0},
+      "datasource": {"type": "elasticsearch", "uid": "sufi-logs"},
+      "targets": [
+        {"query": "extra.evento_seguridad:alerta_emitida", "metrics": [{"type": "count"}]}
+      ]
+    },
+    {
+      "id": 3,
+      "type": "table",
+      "title": "Top IPs con denegaciones (403)",
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 8},
+      "datasource": {"type": "elasticsearch", "uid": "sufi-logs"},
+      "targets": [
+        {
+          "query": "extra.evento_seguridad:autorizacion AND extra.resultado:fallo",
+          "metrics": [{"type": "count"}],
+          "bucketAggs": [{"type": "terms", "field": "extra.ip"}]
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "type": "table",
+      "title": "Logins fallidos por usuario",
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 8},
+      "datasource": {"type": "elasticsearch", "uid": "sufi-logs"},
+      "targets": [
+        {
+          "query": "extra.evento_seguridad:autenticacion AND extra.resultado:fallo",
+          "metrics": [{"type": "count"}],
+          "bucketAggs": [{"type": "terms", "field": "extra.actor"}]
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "type": "stat",
+      "title": "Controles de seguridad desactivados (24h)",
+      "gridPos": {"h": 8, "w": 24, "x": 0, "y": 16},
+      "datasource": {"type": "elasticsearch", "uid": "sufi-logs"},
+      "targets": [
+        {"query": "extra.severidad:critica AND extra.detalle:disabled", "metrics": [{"type": "count"}]}
+      ]
+    }
+  ]
+}

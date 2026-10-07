@@ -1,0 +1,20 @@
+# AP-0081: migraciones desacopladas del arranque de los pods. Se ejecuta UNA vez por
+# despliegue (Job), no en cada replica, evitando que N replicas compitan por migrar.
+# El pipeline aplica este Job y espera su exito ANTES de actualizar el Deployment.
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: sufi-backend-migraciones
+spec:
+  backoffLimit: 2
+  ttlSecondsAfterFinished: 3600
+  template:
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: alembic
+          image: ghcr.io/OWNER/REPO/sufi-backend:REEMPLAZAR_TAG
+          command: ["alembic", "upgrade", "head"]
+          envFrom:
+            - secretRef:
+                name: sufi-backend-secrets

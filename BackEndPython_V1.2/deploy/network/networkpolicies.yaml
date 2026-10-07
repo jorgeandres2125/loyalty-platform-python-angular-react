@@ -1,0 +1,156 @@
+# AP-0150 -- Microsegmentacion de red en Kubernetes/OpenShift (NetworkPolicies).
+#
+# Materializa las zonas del inventario (inventario-segmentacion.yaml) sobre namespaces:
+#   sufi-web  -> Capa Web (SPA / reverse proxy)
+#   sufi-app  -> Capa Aplicacion (FastAPI)
+#   sufi-data -> Capa de Datos (SQL Server 2019)
+#
+# Principio: deny-by-default por namespace + reglas explicitas Norte-Sur. La capa de datos
+# SOLO acepta ingreso desde la capa de aplicacion y unicamente por el puerto 1433.
+#
+# Requisito de infraestructura: los namespaces deben etiquetarse con `zona: web|app|data`
+# para que los namespaceSelector funcionen. Aplicar con: kubectl apply -f networkpolicies.yaml
+---
+# Deny-by-default de ingreso en la Capa Web.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny-ingress-web
+  namespace: sufi-web
+spec:
+  podSelector: {}
+  policyTypes:
+    - Ingress
+---
+# La Capa Web solo recibe trafico saneado desde la DMZ (Ingress controller / WAF).
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: permitir-dmz-a-web
+  namespace: sufi-web
+spec:
+  podSelector:
+    matchLabels:
+      app: sufi-frontend
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              zona: ingress
+      ports:
+        - protocol: TCP
+          port: 8443
+---
+# Deny-by-default de ingreso en la Capa Aplicacion.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny-ingress-app
+  namespace: sufi-app
+spec:
+  podSelector: {}
+  policyTypes:
+    - Ingress
+---
+# La Capa Aplicacion solo recibe trafico (mTLS) desde la Capa Web.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: permitir-web-a-app
+  namespace: sufi-app
+spec:
+  podSelector:
+    matchLabels:
+      app: sufi-backend
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              zona: web
+      ports:
+        - protocol: TCP
+          port: 8443
+---
+# Deny-by-default de EGRESO en la Capa Aplicacion (control estricto de salidas).
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny-egress-app
+  namespace: sufi-app
+spec:
+  podSelector: {}
+  policyTypes:
+    - Egress
+---
+# La Capa Aplicacion solo egresa a la Capa de Datos (1433) y a Servicios Compartidos (443) + DNS.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: permitir-app-a-datos-y-compartidos
+  namespace: sufi-app
+spec:
+  podSelector:
+    matchLabels:
+      app: sufi-backend
+  policyTypes:
+    - Egress
+  egress:
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              zona: data
+      ports:
+        - protocol: TCP
+          port: 1433
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              zona: shared
+      ports:
+        - protocol: TCP
+          port: 443
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
+---
+# Deny-by-default de ingreso en la Capa de Datos.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny-ingress-data
+  namespace: sufi-data
+spec:
+  podSelector: {}
+  policyTypes:
+    - Ingress
+---
+# INVARIANTE CLAVE: SQL Server SOLO acepta ingreso desde la Capa Aplicacion, y solo por 1433.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: permitir-solo-app-a-datos
+  namespace: sufi-data
+spec:
+  podSelector:
+    matchLabels:
+      app: sufi-sqlserver
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              zona: app
+      ports:
+        - protocol: TCP
+          port: 1433

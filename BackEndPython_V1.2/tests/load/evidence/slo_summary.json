@@ -1,0 +1,21 @@
+{
+  "concurrencia_objetivo": 100,
+  "num_requests": 13340,
+  "num_failures": 0,
+  "fail_ratio": 0.0,
+  "latencia_ms": {
+    "mediana": 23.0,
+    "p95": 59.0,
+    "p99": 300.0,
+    "max": 895.8
+  },
+  "slo": {
+    "p95_max_ms": 5000.0,
+    "fail_ratio_max": 0.0
+  },
+  "veredicto": {
+    "AP-0031_latencia": "VERDE",
+    "AP-0032_errores": "VERDE",
+    "global": "VERDE"
+  }
+}

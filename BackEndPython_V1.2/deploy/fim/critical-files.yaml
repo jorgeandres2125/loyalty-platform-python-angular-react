@@ -1,0 +1,111 @@
+# AP-0121 -- Registro canonico de archivos criticos por sistema (fuente unica de verdad).
+# Lo consume generar_registro_baseline.py (baseline SHA-256) y reporte_inventario.py (inventario
+# clasificado), y el gate de CI (fim.yml) para detectar cambios no revisados. Las rutas base son
+# relativas a la raiz del repositorio. NO se incluyen secretos reales: solo plantillas .example y,
+# en certificados, se vigila el hash del archivo, nunca su contenido.
+#
+# Metadata de gobierno (AP-0121 Fase 2) por sistema:
+#   criticidad: C1 (critico) | C2 (alto) | C3 (medio)
+#   responsable: equipo dueno del conjunto de archivos
+#   revision: frecuencia de revision formal del inventario
+version: 2
+
+exclude_dirs:
+  - node_modules
+  - .venv
+  - __pycache__
+  - dist
+  - .vite
+  - coverage
+  - References
+
+systems:
+  backend:
+    base: BackEndPython_V1.2
+    criticidad: C3
+    responsable: Desarrollo
+    revision: semestral
+    patterns:
+      - "src/**/*.py"
+      - "main.py"
+      - "pyproject.toml"
+      - "uv.lock"
+      - "alembic/alembic.ini"
+      - "alembic/versions/*.py"
+
+  frontend:
+    base: FrontEndReact_V1.1/sufiatulado-app
+    criticidad: C3
+    responsable: Desarrollo
+    revision: semestral
+    patterns:
+      - "package.json"
+      - "package-lock.json"
+      - "vite.config.ts"
+      - "vitest.config.ts"
+      - "tsconfig.json"
+      - "tsconfig.app.json"
+      - "tsconfig.node.json"
+      - "eslint.config.js"
+      - "index.html"
+      - "src/**/*.ts"
+      - "src/**/*.tsx"
+
+  base_datos:
+    base: Docker/init
+    criticidad: C2
+    responsable: Desarrollo y DBA
+    revision: trimestral
+    patterns:
+      - "*.sql"
+      - "entrypoint.sh"
+
+  imagen_contenedor:
+    base: Docker
+    criticidad: C1
+    responsable: Desarrollo y Plataforma
+    revision: trimestral
+    patterns:
+      - "Dockerfile.backend"
+      - "docker-compose.yml"
+
+  cicd:
+    base: .github
+    criticidad: C1
+    responsable: Desarrollo y Plataforma
+    revision: trimestral
+    patterns:
+      - "workflows/*.yml"
+      - "dependabot.yml"
+      - "CODEOWNERS"
+
+  despliegue_iac:
+    base: BackEndPython_V1.2/deploy
+    criticidad: C1
+    responsable: Plataforma y CloudOps
+    revision: trimestral
+    patterns:
+      - "k8s/*.yaml"
+      - "iac/*.bicep"
+      - "policy/*.yaml"
+      - "scripts/*"
+      - "fim/critical-files.yaml"
+      - "fim/generar_registro_baseline.py"
+      - "fim/reporte_inventario.py"
+
+  config_plantillas:
+    base: BackEndPython_V1.2
+    criticidad: C2
+    responsable: Desarrollo y Seguridad
+    revision: trimestral
+    patterns:
+      - ".env.staging.example"
+      - ".env.production.example"
+
+  certificados:
+    base: certificates
+    criticidad: C1
+    responsable: Seguridad
+    revision: trimestral
+    patterns:
+      - "*.pem"

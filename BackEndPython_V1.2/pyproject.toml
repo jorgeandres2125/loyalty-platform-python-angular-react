@@ -1,0 +1,95 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "sufi-backend"
+version = "1.2.0"
+description = "SUFI Comisionistas Platform — Backend Python 3.14 (Hexagonal Architecture)"
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi>=0.115.0",
+    "uvicorn[standard]>=0.30.0",
+    "sqlalchemy[asyncio]>=2.0.0",
+    "aioodbc>=0.5.0",
+    "pyodbc>=5.0.0",
+    "alembic>=1.13.0",
+    "pydantic>=2.7.0",
+    "pydantic-settings>=2.14.2",
+    "python-jose[cryptography]>=3.3.0",
+    "passlib[bcrypt]>=1.7.4",
+    "pycryptodome>=3.20.0",
+    "python-multipart>=0.0.31",
+    "starlette-compress>=1.6.0",
+    "httpx>=0.27.0",
+    "openpyxl>=3.1.0",
+    "python-dateutil>=2.9.0",
+    "apscheduler>=3.10.0",
+    "pypdf>=4.0.0",
+    # AP-0114: pisos de seguridad para transitivas (hallazgos pip-audit / SCA).
+    "cryptography>=48.0.1",
+    "starlette>=1.3.1",
+    "idna>=3.15",
+    "mako>=1.3.12",
+    "slowapi>=0.1.9",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.2.0",
+    "pytest-asyncio>=0.23.0",
+    "pytest-cov>=5.0.0",
+    "httpx>=0.27.0",
+    "factory-boy>=3.3.0",
+    "ruff>=0.4.0",
+    "mypy>=1.10.0",
+    "vulture>=2.16",
+]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["src*"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+pythonpath = [".", "src"]
+markers = [
+    "slow: tests lentos (>1s) — usar `pytest -m 'not slow'` para excluirlos",
+]
+
+[tool.ruff]
+line-length = 100
+extend-exclude = ["vulture_whitelist.py"]
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "N", "UP", "C90"]
+# AP-0115: prohibe funciones inseguras conocidas (ejecucion dinamica y
+# deserializacion no segura). Subconjunto flake8-bandit: exec/eval, pickle,
+# marshal, yaml.load inseguro y subprocess con shell.
+extend-select = ["S102", "S301", "S302", "S307", "S506", "S602", "S604", "S605", "S606", "S607"]
+# Convencion de nombres de excepciones en espanol sin sufijo Error (dominio SUFI).
+ignore = ["N818"]
+
+# AP-0036: complejidad ciclomática (McCabe) < 20. ruff marca C901 cuando la
+# complejidad supera max-complexity → 19 fuerza que toda función quede en ≤19 (<20).
+[tool.ruff.lint.mccabe]
+max-complexity = 19
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+ignore_missing_imports = true
+
+# AP-0110: deteccion de codigo muerto. min_confidence 60 captura funciones/
+# clases/metodos sin invocar. Los falsos positivos de framework se filtran por
+# decorador (rutas FastAPI, validadores Pydantic) y el resto (campos de schemas,
+# columnas ORM, andamiaje de puertos por tabla, paridad cripto SAPIN) vive en
+# vulture_whitelist.py con justificacion.
+[tool.vulture]
+min_confidence = 60
+paths = ["src", "vulture_whitelist.py"]
+sort_by_size = true
+ignore_decorators = ["@router.*", "@app.*", "@field_validator", "@model_validator"]
+ignore_names = ["dispatch", "model_config"]
