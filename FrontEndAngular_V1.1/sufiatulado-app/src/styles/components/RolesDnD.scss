@@ -1,0 +1,226 @@
+$dnd-green: #007064;
+$dnd-green-soft: #E6F2F0;
+$dnd-green-border: #00564C;
+$dnd-gray: #6B7785;
+$dnd-chip-bg: #F4F6F8;
+$dnd-critico: #B42318;
+$dnd-critico-soft: #FCEFEE;
+$dnd-easing: cubic-bezier(0.22, 1, 0.36, 1);
+
+.roles-dnd {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+
+  &__hint {
+    font-size: 0.78rem;
+    line-height: 1.45;
+    color: #6B7785;
+    margin-bottom: 10px;
+  }
+
+  &__zone {
+    border: 1.5px dashed #CDD6DF;
+    border-radius: 10px;
+    padding: 10px;
+    background: #FFFFFF;
+    min-height: 96px;
+    transition: border-color 0.2s $dnd-easing, background 0.2s $dnd-easing, box-shadow 0.2s $dnd-easing;
+
+    &--asignados.is-over {
+      border-color: $dnd-green-border;
+      background: $dnd-green-soft;
+      box-shadow: 0 0 0 3px rgba(0, 112, 100, 0.18);
+    }
+
+    &--disponibles.is-over {
+      border-color: $dnd-gray;
+      background: #EEF1F4;
+      box-shadow: 0 0 0 3px rgba(107, 119, 133, 0.18);
+    }
+  }
+
+  &__zone-head {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: #333241;
+
+    i {
+      color: $dnd-green;
+    }
+  }
+
+  &__zone--disponibles &__zone-head i {
+    color: $dnd-gray;
+  }
+
+  &__zone-title {
+    flex: 1;
+  }
+
+  &__count {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 22px;
+    height: 22px;
+    padding: 0 7px;
+    border-radius: 999px;
+    background: $dnd-green;
+    color: #FFFFFF;
+    font-size: 0.72rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+  }
+
+  &__zone--disponibles &__count {
+    background: $dnd-gray;
+  }
+
+  &__empty {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    margin: 0;
+    padding: 16px 8px;
+    font-size: 0.78rem;
+    color: #97A1AD;
+    text-align: center;
+  }
+
+  &__list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  &__chip {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 44px;
+    padding: 6px 8px 6px 6px;
+    background: $dnd-chip-bg;
+    border: 1px solid #E2E7EC;
+    border-left: 3px solid $dnd-green;
+    border-radius: 8px;
+    cursor: grab;
+    user-select: none;
+    touch-action: none;
+    transition: box-shadow 0.18s $dnd-easing, transform 0.18s $dnd-easing, opacity 0.18s $dnd-easing, background 0.18s $dnd-easing;
+
+    &:hover {
+      background: #EDF1F4;
+      box-shadow: 0 2px 8px rgba(16, 24, 40, 0.08);
+    }
+
+    &:active {
+      cursor: grabbing;
+    }
+
+    &.is-dragging {
+      opacity: 0.92;
+      box-shadow: 0 10px 24px rgba(16, 24, 40, 0.18);
+      transform: scale(1.02);
+    }
+
+    &.is-critico {
+      border-left-color: $dnd-critico;
+      background: $dnd-critico-soft;
+    }
+  }
+
+  &__grip {
+    display: inline-flex;
+    color: #B2BFCC;
+    font-size: 1rem;
+    cursor: grab;
+  }
+
+  &__chip-ico {
+    color: $dnd-green;
+    font-size: 1rem;
+  }
+
+  &__chip.is-critico &__chip-ico {
+    color: $dnd-critico;
+  }
+
+  &__chip-name {
+    flex: 1;
+    min-width: 0;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #2B2A36;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  &__chip-rid {
+    font-size: 0.7rem;
+    color: #97A1AD;
+    font-variant-numeric: tabular-nums;
+  }
+
+  &__chip-btn {
+    flex-shrink: 0;
+    width: 34px;
+    height: 34px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid transparent;
+    border-radius: 7px;
+    background: rgba(0, 112, 100, 0.10);
+    color: $dnd-green;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background 0.18s $dnd-easing, color 0.18s $dnd-easing;
+
+    &:hover:not(:disabled) {
+      background: $dnd-green;
+      color: #FFFFFF;
+    }
+
+    &:focus-visible {
+      outline: 2px solid $dnd-green-border;
+      outline-offset: 2px;
+    }
+
+    &:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+    }
+  }
+
+  &__chip.is-critico &__chip-btn {
+    background: rgba(180, 35, 24, 0.10);
+    color: $dnd-critico;
+
+    &:hover:not(:disabled) {
+      background: $dnd-critico;
+      color: #FFFFFF;
+    }
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .roles-dnd__chip,
+  .roles-dnd__zone,
+  .roles-dnd__chip-btn {
+    transition: none;
+  }
+
+  .roles-dnd__chip.is-dragging {
+    transform: none;
+  }
+}

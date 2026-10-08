@@ -1,0 +1,40 @@
+import { Injectable, inject } from '@angular/core';
+import { ApiClient } from '../../../shared/api/client';
+import type { ReporteParams, ReportePreviewParams, ReportePreviewResponse } from './types';
+
+@Injectable({ providedIn: 'root' })
+export class ReportesApi {
+  private readonly api = inject(ApiClient);
+
+  async generar(params: ReporteParams): Promise<{ blob: Blob; filename: string }> {
+    const body: Record<string, unknown> = { tipo: params.tipo, programa: params.programa ?? 1 };
+    if (params.subprograma) body['subprograma'] = params.subprograma;
+    if (params.fecha_inicio) body['fecha_inicio'] = params.fecha_inicio;
+    if (params.fecha_fin) body['fecha_fin'] = params.fecha_fin;
+    if (params.cedula) body['cedula'] = params.cedula;
+    if (params.estado !== undefined && params.estado !== null) body['estado'] = params.estado;
+
+    const response = await this.api.post<Blob>('/reportes/generar', body, { responseType: 'blob' });
+    const disposition: string = response.headers.get('content-disposition') ?? '';
+    const match = /filename\*?=(?:UTF-8'')?([^;]+)/i.exec(disposition);
+    const filename: string = match ? decodeURIComponent(match[1].replace(/^"|"$/g, '')) : 'reporte.xlsx';
+    return { blob: response.data, filename };
+  }
+
+  async preview(params: ReportePreviewParams): Promise<ReportePreviewResponse> {
+    const body: Record<string, unknown> = {
+      tipo: params.tipo,
+      programa: params.programa ?? 1,
+      page: params.page,
+      page_size: params.page_size,
+    };
+    if (params.subprograma) body['subprograma'] = params.subprograma;
+    if (params.fecha_inicio) body['fecha_inicio'] = params.fecha_inicio;
+    if (params.fecha_fin) body['fecha_fin'] = params.fecha_fin;
+    if (params.cedula) body['cedula'] = params.cedula;
+    if (params.estado !== undefined && params.estado !== null) body['estado'] = params.estado;
+
+    const response = await this.api.post<ReportePreviewResponse>('/reportes/preview', body);
+    return response.data;
+  }
+}

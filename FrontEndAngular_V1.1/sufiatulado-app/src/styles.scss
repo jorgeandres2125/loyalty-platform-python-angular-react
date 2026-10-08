@@ -1,0 +1,7 @@
+// Estilos globales (equivalente a los imports de estilos del proyecto React).
+// Las hojas de componentes se cargan globalmente para conservar las clases BEM tal cual.
+@import 'styles/main';
+@import 'styles/components/IconPillButton';
+@import 'styles/components/MetroTileToggle';
+@import 'styles/components/TieneHijosSelector';
+@import 'styles/components/RolesDnD';

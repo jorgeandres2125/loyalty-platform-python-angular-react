@@ -1,0 +1,27 @@
+.hijos-row {
+  position: relative;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.5rem;
+  padding: 0.75rem;
+  background-color: #fdfdfd;
+}
+
+.hijos-row + .hijos-row {
+  margin-top: 0.5rem;
+}
+
+.hijos-row .hijo-index {
+  position: absolute;
+  top: -0.6rem;
+  left: 0.75rem;
+  background-color: #dc3545;
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.1rem 0.5rem;
+  border-radius: 0.75rem;
+}
+
+.hijos-row .hijo-remove {
+  white-space: nowrap;
+}

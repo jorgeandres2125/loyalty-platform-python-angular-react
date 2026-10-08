@@ -1,0 +1,248 @@
+// ─────────────────────────────────────────────────────────────────────────────
+// IconPillButton — Píldora horizontal con zona izquierda gris (ícono blanco) +
+// zona derecha de color (texto blanco en mayúsculas). Estilo flat con sombra
+// suave; estado seleccionado con borde/glow.
+// Paleta SUFI (de src/styles/_variables.scss).
+// ─────────────────────────────────────────────────────────────────────────────
+
+$sufi-red:        #FF0026;
+$sufi-red-dark:   #C2001D;
+$sufi-navy:       #333241;
+$sufi-gray:       #B2BFCC;
+$sufi-blue:       #6C92B7;
+$sufi-blue-dark:  #4A6E91;
+$sufi-gold:       #B89E44;
+$sufi-gold-dark:  #8C7531;
+$sufi-yellow:     #FFC100;
+$sufi-yellow-dark:#C99700;
+$sufi-dark-navy:  #100941;
+$sufi-teal:       #54ABB1;
+$sufi-teal-dark:  #34777C;
+$sufi-green:      #00D6C3;
+$sufi-green-dark: #009E92;
+
+// Acentos adicionales (referencia visual de la imagen)
+$pill-orange:     #F26A1B;
+$pill-orange-dark:#C7560F;
+$pill-purple:     #6E2E92;
+$pill-purple-dark:#4F1F6B;
+$pill-cyan:       #26B6D9;
+$pill-cyan-dark:  #1F8FAD;
+$pill-lime:       #8CC640;
+$pill-lime-dark:  #6FA02E;
+
+// Tokens base
+$pill-icon-bg:        #3A3F46;
+$pill-icon-bg-dark:   #2C3036;
+$pill-text:           #FFFFFF;
+$pill-radius:         999px;        // píldora completa
+$pill-height:         52px;
+$pill-min-width:      150px;
+$pill-easing:         cubic-bezier(0.22, 1, 0.36, 1);
+$pill-shadow-rest:    0 4px 10px rgba(20, 22, 30, 0.18),
+                      0 1px 2px rgba(20, 22, 30, 0.10);
+$pill-shadow-hover:   0 8px 18px rgba(20, 22, 30, 0.26),
+                      0 2px 4px rgba(20, 22, 30, 0.14);
+$pill-shadow-active:  0 2px 4px rgba(20, 22, 30, 0.18);
+$pill-shadow-selected:0 6px 14px rgba(20, 22, 30, 0.28),
+                      0 1px 3px rgba(20, 22, 30, 0.14);
+
+.icon-pill {
+  // Reset de <button>
+  appearance: none;
+  -webkit-appearance: none;
+  border: none;
+  padding: 0;
+  margin: 0;
+  font-family: inherit;
+  outline: none;
+
+  // Layout
+  display: inline-flex;
+  align-items: stretch;
+  width: 100%;
+  min-width: $pill-min-width;
+  min-height: $pill-height;
+  background: transparent;
+  border-radius: $pill-radius;
+  overflow: hidden;
+  cursor: pointer;
+  user-select: none;
+  position: relative;
+
+  // Profundidad
+  box-shadow: $pill-shadow-rest;
+  transition:
+    transform 0.18s $pill-easing,
+    box-shadow 0.22s $pill-easing,
+    filter 0.22s $pill-easing;
+
+  // Zona izquierda (gris) con ícono blanco
+  &__icon {
+    flex: 0 0 28%;
+    min-width: 56px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, $pill-icon-bg 0%, $pill-icon-bg-dark 100%);
+    color: $pill-text;
+
+    i {
+      font-size: calc(#{$pill-height} * 0.50);
+      line-height: 1;
+      color: $pill-text;
+    }
+
+    // SVG/ReactNode
+    svg {
+      width: calc(#{$pill-height} * 0.50);
+      height: calc(#{$pill-height} * 0.50);
+      stroke: $pill-text;
+      fill: none;
+    }
+  }
+
+  // Zona derecha (color) con texto en mayúsculas
+  &__label {
+    flex: 1 1 auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 18px 0 14px;
+    color: $pill-text;
+    font-size: calc(#{$pill-height} * 0.32);
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    line-height: 1.1;
+    text-align: center;
+    word-break: break-word;
+    transition: filter 0.22s $pill-easing, background 0.22s $pill-easing;
+  }
+
+  // ─── Estados interactivos ────────────────────────────────────────────────
+  &:hover {
+    transform: translateY(-1px);
+    box-shadow: $pill-shadow-hover;
+  }
+
+  &:active {
+    transform: translateY(1px);
+    box-shadow: $pill-shadow-active;
+  }
+
+  &:focus-visible {
+    outline: 3px solid rgba(0, 0, 0, 0.20);
+    outline-offset: 3px;
+  }
+
+  // ─── Estado SELECCIONADO ─────────────────────────────────────────────────
+  &.is-selected {
+    box-shadow:
+      $pill-shadow-selected,
+      0 0 0 2px rgba(255, 255, 255, 0.85) inset;          // borde claro interno
+    filter: saturate(1.10) brightness(1.04);
+
+    .icon-pill__label {
+      filter: saturate(1.08) brightness(1.04);
+    }
+
+    // Inversión de la zona izquierda: fondo claro, ícono oscuro, borde grueso
+    // El borde sigue la curva izquierda del píldora (matching outer button)
+    .icon-pill__icon {
+      background: #FFFFFF;
+      border-radius: $pill-radius 0 0 $pill-radius;       // rounded left, flat right
+      box-shadow:
+        inset 0 0 0 4px $pill-icon-bg,                    // borde grueso interno (sigue el border-radius)
+        2px 0 4px rgba(20, 22, 30, 0.10);                 // separación sutil con la zona de color
+
+      i,
+      svg {
+        color: $pill-icon-bg;
+        stroke: $pill-icon-bg;
+      }
+    }
+
+    // glow exterior usando el color del acento
+    &::after {
+      content: '';
+      position: absolute;
+      inset: -3px;
+      border-radius: $pill-radius;
+      pointer-events: none;
+      box-shadow: 0 0 0 2px var(--icon-pill-glow, rgba(0, 0, 0, 0.10)),
+                  0 0 14px 2px var(--icon-pill-glow, rgba(0, 0, 0, 0.10));
+      opacity: 0.85;
+    }
+  }
+
+  &.is-selected:hover {
+    box-shadow:
+      $pill-shadow-hover,
+      0 0 0 2px rgba(255, 255, 255, 0.85) inset;
+  }
+
+  // ─── Estado DESHABILITADO ────────────────────────────────────────────────
+  &.is-disabled,
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.55;
+    transform: none;
+    box-shadow: $pill-shadow-rest;
+    filter: grayscale(0.25);
+  }
+
+  // ─── Variantes de color (zona derecha) ───────────────────────────────────
+  @mixin pill-color($base, $dark) {
+    .icon-pill__label {
+      background: linear-gradient(135deg, $base 0%, $dark 100%);
+    }
+    &.is-selected {
+      --icon-pill-glow: #{rgba($base, 0.55)};
+    }
+  }
+
+  &--red       { @include pill-color($sufi-red,    $sufi-red-dark); }
+  &--navy      { @include pill-color($sufi-navy,   $sufi-dark-navy); }
+  &--blue      { @include pill-color($pill-cyan,   $pill-cyan-dark); }
+  &--gold      { @include pill-color($sufi-gold,   $sufi-gold-dark); }
+  &--yellow {
+    @include pill-color($sufi-yellow, $sufi-yellow-dark);
+    .icon-pill__label { color: $sufi-dark-navy; }
+  }
+  &--dark-navy { @include pill-color($sufi-dark-navy, #050218); }
+  &--teal      { @include pill-color($sufi-teal,   $sufi-teal-dark); }
+  &--green     { @include pill-color($sufi-green,  $sufi-green-dark); }
+  &--gray {
+    @include pill-color($sufi-gray, #8696A8);
+    .icon-pill__label { color: $sufi-dark-navy; }
+  }
+  &--orange    { @include pill-color($pill-orange, $pill-orange-dark); }
+  &--purple    { @include pill-color($pill-purple, $pill-purple-dark); }
+
+  // Variante custom color via CSS vars
+  &.has-custom-color {
+    .icon-pill__label {
+      background: linear-gradient(135deg, var(--icon-pill-color) 0%, var(--icon-pill-color-dark) 100%);
+    }
+    &.is-selected {
+      --icon-pill-glow: var(--icon-pill-color);
+    }
+  }
+}
+
+// ─── Tamaños responsivos ─────────────────────────────────────────────────────
+// En pantallas más pequeñas reducimos un poco la tipografía para que entren
+// labels largos sin romper la píldora.
+@media (max-width: 480px) {
+  .icon-pill {
+    min-height: 46px;
+
+    &__icon i { font-size: 22px; }
+    &__label  {
+      font-size: 13px;
+      letter-spacing: 0.04em;
+      padding: 0 12px 0 10px;
+    }
+  }
+}

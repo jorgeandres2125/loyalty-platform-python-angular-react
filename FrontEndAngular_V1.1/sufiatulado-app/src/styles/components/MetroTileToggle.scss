@@ -1,0 +1,358 @@
+// ─────────────────────────────────────────────────────────────────────────────
+// MetroTileToggle — Tile expandible estilo Metro UI con paleta SUFI
+// Paleta SUFI (de src/styles/_variables.scss):
+//   $sufi-red:        #FF0026   (primario / brand)
+//   $sufi-navy:       #333241
+//   $sufi-gray:       #B2BFCC
+//   $sufi-blue:       #6C92B7
+//   $sufi-gold:       #B89E44
+//   $sufi-yellow:     #FFC100
+//   $sufi-dark-navy:  #100941
+//   $sufi-teal:       #54ABB1
+//   $sufi-green:      #00D6C3
+// ─────────────────────────────────────────────────────────────────────────────
+
+$sufi-red:        #FF0026;
+$sufi-red-dark:   #C2001D;
+$sufi-navy:       #333241;
+$sufi-gray:       #B2BFCC;
+$sufi-blue:       #6C92B7;
+$sufi-blue-dark:  #4A6E91;
+$sufi-gold:       #B89E44;
+$sufi-gold-dark:  #8C7531;
+$sufi-yellow:     #FFC100;
+$sufi-yellow-dark:#C99700;
+$sufi-dark-navy:  #100941;
+$sufi-teal:       #54ABB1;
+$sufi-teal-dark:  #34777C;
+$sufi-green:      #00D6C3;
+$sufi-green-dark: #009E92;
+$sufi-save:       #007064;
+$sufi-save-dark:  #00564C;
+$sufi-orange:        #E07020;
+$sufi-orange-dark:   #B85818;
+$sufi-orange-deep:   #C44010;
+$sufi-orange-deep-dark: #963010;
+$sufi-amber:         #F09828;
+$sufi-amber-dark:    #C07818;
+$sufi-cyan:          #1AB8CE;
+$sufi-cyan-dark:     #0D8A9C;
+$sufi-cyan-deep:     #0078A8;
+$sufi-cyan-deep-dark:#005C82;
+$sufi-purple:        #8B44C8;
+$sufi-purple-dark:   #6A2EA0;
+$sufi-violet:        #5B2FC8;
+$sufi-violet-dark:   #4020A0;
+$sufi-magenta:       #B8248C;
+$sufi-magenta-dark:  #8C1A6A;
+
+$tile-text:       #FFFFFF;
+$tile-radius:     12px;
+$tile-easing:     cubic-bezier(0.22, 1, 0.36, 1);
+$tile-shadow:     0 4px 12px rgba(51, 50, 65, 0.10);
+$tile-shadow-hi:  0 6px 18px rgba(255, 0, 38, 0.22);
+$tile-border:     rgba(51, 50, 65, 0.06);
+
+.metro-tile {
+  width: 100%;
+  position: relative;
+
+  // ─── Header / botón colapsado ─────────────────────────────────────────────
+  &__header {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 18px 20px;
+    background: linear-gradient(135deg, $sufi-red 0%, $sufi-red-dark 100%);
+    color: $tile-text;
+    border: none;
+    border-radius: $tile-radius;
+    cursor: pointer;
+    user-select: none;
+    text-align: left;
+    box-shadow: $tile-shadow;
+    transition: box-shadow 0.25s $tile-easing;
+    overflow: hidden;
+    position: relative;
+
+    &:focus-visible {
+      outline: 3px solid rgba(255, 255, 255, 0.55);
+      outline-offset: 2px;
+    }
+
+    // Brillo Metro al hover
+    &::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at 30% 20%, rgba(255,255,255,0.20) 0%, transparent 60%);
+      opacity: 0;
+      transition: opacity 0.3s $tile-easing;
+      pointer-events: none;
+    }
+
+    &:hover::after { opacity: 1; }
+  }
+
+  &__icon {
+    flex-shrink: 0;
+    width: 44px;
+    height: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.20);
+    backdrop-filter: blur(4px);
+
+    i {
+      font-size: 1.5rem;
+      line-height: 1;
+      color: $tile-text;
+    }
+  }
+
+  &__titles {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    line-height: 1.25;
+  }
+
+  &__title {
+    font-size: 1.05rem;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  &__subtitle {
+    font-size: 0.78rem;
+    opacity: 0.85;
+    margin-top: 2px;
+    font-weight: 400;
+  }
+
+  &__chevron {
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.18);
+    transition: transform 0.4s $tile-easing;
+
+    i {
+      font-size: 1rem;
+      color: $tile-text;
+    }
+  }
+
+  &__badge {
+    flex-shrink: 0;
+    min-width: 28px;
+    height: 28px;
+    padding: 0 8px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 14px;
+    background: $sufi-yellow;
+    color: $sufi-dark-navy;
+    font-size: 0.78rem;
+    font-weight: 700;
+    margin-right: 6px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+  }
+
+  // ─── Estado abierto ───────────────────────────────────────────────────────
+  &.is-open {
+    .metro-tile__header {
+      border-radius: $tile-radius $tile-radius 0 0;
+      box-shadow: $tile-shadow-hi;
+    }
+    .metro-tile__chevron {
+      transform: rotate(180deg);
+    }
+  }
+
+  // ─── Body expandido ───────────────────────────────────────────────────────
+  &__body {
+    overflow: hidden;
+    background: #FFFFFF;
+    border: 1px solid $tile-border;
+    border-top: none;
+    border-radius: 0 0 $tile-radius $tile-radius;
+    box-shadow: 0 8px 24px rgba(51, 50, 65, 0.08);
+  }
+
+  &__content {
+    padding: 20px;
+  }
+
+  &__footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    padding: 12px 20px 18px;
+    border-top: 1px solid rgba(51, 50, 65, 0.05);
+    background: #FAFBFC;
+    border-radius: 0 0 $tile-radius $tile-radius;
+  }
+
+  &__close {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    border: 1px solid $sufi-red;
+    background: transparent;
+    color: $sufi-red-dark;
+    font-size: 0.85rem;
+    font-weight: 600;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background 0.2s $tile-easing, color 0.2s $tile-easing,
+                box-shadow 0.2s $tile-easing;
+
+    i { font-size: 0.95rem; }
+
+    &:hover {
+      background: $sufi-red;
+      color: $tile-text;
+      box-shadow: 0 4px 10px rgba(255, 0, 38, 0.25);
+    }
+
+    &:focus-visible {
+      outline: 2px solid $sufi-red;
+      outline-offset: 2px;
+    }
+  }
+
+  &__save {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 18px;
+    border: 1px solid $sufi-save-dark;
+    background: linear-gradient(135deg, $sufi-save 0%, $sufi-save-dark 100%);
+    color: $tile-text;
+    font-size: 0.85rem;
+    font-weight: 600;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: filter 0.2s $tile-easing, box-shadow 0.2s $tile-easing,
+                opacity 0.2s $tile-easing;
+
+    i { font-size: 0.95rem; }
+    .spinner-border { width: 0.9rem; height: 0.9rem; border-width: 0.15em; }
+
+    &:hover:not(:disabled) {
+      filter: brightness(1.08);
+      box-shadow: 0 4px 12px rgba(0, 112, 100, 0.35);
+    }
+
+    &:focus-visible {
+      outline: 2px solid $sufi-save-dark;
+      outline-offset: 2px;
+    }
+
+    &:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+  }
+
+  // ─── Tamaños ──────────────────────────────────────────────────────────────
+  &--small  .metro-tile__header { padding: 14px 16px; }
+  &--small  .metro-tile__icon   { width: 36px; height: 36px; i { font-size: 1.2rem; } }
+  &--small  .metro-tile__title  { font-size: 0.95rem; }
+
+  &--medium .metro-tile__header { padding: 18px 20px; }
+
+  &--wide   .metro-tile__header { padding: 22px 24px; }
+  &--wide   .metro-tile__icon   { width: 52px; height: 52px; i { font-size: 1.7rem; } }
+  &--wide   .metro-tile__title  { font-size: 1.15rem; }
+  &--wide   .metro-tile__subtitle { font-size: 0.82rem; }
+
+  // ─── Variantes de color (paleta SUFI) ─────────────────────────────────────
+  &--red       .metro-tile__header { background: linear-gradient(135deg, $sufi-red       0%, $sufi-red-dark    100%); }
+  &--navy      .metro-tile__header { background: linear-gradient(135deg, $sufi-navy      0%, $sufi-dark-navy   100%); }
+  &--blue      .metro-tile__header { background: linear-gradient(135deg, $sufi-blue      0%, $sufi-blue-dark   100%); }
+  &--gold      .metro-tile__header { background: linear-gradient(135deg, $sufi-gold      0%, $sufi-gold-dark   100%); }
+  &--yellow    .metro-tile__header { background: linear-gradient(135deg, $sufi-yellow    0%, $sufi-yellow-dark 100%); color: $sufi-dark-navy; }
+  &--yellow    .metro-tile__icon i,
+  &--yellow    .metro-tile__chevron i { color: $sufi-dark-navy; }
+  &--yellow    .metro-tile__icon       { background: rgba(16, 9, 65, 0.10); }
+  &--yellow    .metro-tile__chevron    { background: rgba(16, 9, 65, 0.10); }
+  &--dark-navy .metro-tile__header { background: linear-gradient(135deg, $sufi-dark-navy 0%, #050218          100%); }
+  &--teal      .metro-tile__header { background: linear-gradient(135deg, $sufi-teal      0%, $sufi-teal-dark   100%); }
+  &--green     .metro-tile__header { background: linear-gradient(135deg, $sufi-green     0%, $sufi-green-dark  100%); }
+  &--gray      .metro-tile__header { background: linear-gradient(135deg, $sufi-gray      0%, #8696A8           100%); color: $sufi-dark-navy; }
+  &--orange      .metro-tile__header { background: linear-gradient(135deg, $sufi-orange      0%, $sufi-orange-dark       100%); }
+  &--orange-deep .metro-tile__header { background: linear-gradient(135deg, $sufi-orange-deep 0%, $sufi-orange-deep-dark  100%); }
+  &--amber       .metro-tile__header { background: linear-gradient(135deg, $sufi-amber       0%, $sufi-amber-dark        100%); }
+  &--cyan        .metro-tile__header { background: linear-gradient(135deg, $sufi-cyan        0%, $sufi-cyan-dark         100%); }
+  &--cyan-deep   .metro-tile__header { background: linear-gradient(135deg, $sufi-cyan-deep   0%, $sufi-cyan-deep-dark    100%); }
+  &--purple      .metro-tile__header { background: linear-gradient(135deg, $sufi-purple      0%, $sufi-purple-dark       100%); }
+  &--violet      .metro-tile__header { background: linear-gradient(135deg, $sufi-violet      0%, $sufi-violet-dark       100%); }
+  &--magenta     .metro-tile__header { background: linear-gradient(135deg, $sufi-magenta     0%, $sufi-magenta-dark      100%); }
+
+  // Variantes con custom color via CSS var
+  &.has-custom-color .metro-tile__header {
+    background: linear-gradient(135deg, var(--metro-tile-color) 0%, var(--metro-tile-color-dark) 100%);
+  }
+}
+
+// Layout interno para forzar el wrap de los selectores existentes
+// (que usan Col xs=12 sm=6 md=auto).
+// metro-hobbies-grid: 10 items en 3 filas en desktop (4-4-2 aprox)
+// metro-twocol-grid:  ~7 items en 2 filas en desktop (4-3 aprox)
+.metro-hobbies-grid {
+  > .row > [class*='col-'] {
+    @media (min-width: 768px) {
+      flex: 0 0 25% !important;
+      max-width: 25% !important;
+    }
+  }
+}
+
+.metro-twocol-grid {
+  > .row > [class*='col-'] {
+    @media (min-width: 768px) {
+      flex: 0 0 25% !important;
+      max-width: 25% !important;
+    }
+  }
+}
+
+// Grid auxiliar para arreglos tipo Metro
+.metro-tile-grid {
+  display: grid;
+  grid-template-columns: repeat(1, 1fr);
+  gap: 16px;
+
+  @media (min-width: 768px) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  @media (min-width: 1200px) {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  &__item--wide {
+    grid-column: 1 / -1;
+  }
+
+  &__item--span2 {
+    @media (min-width: 768px) {
+      grid-column: span 2;
+    }
+  }
+}
